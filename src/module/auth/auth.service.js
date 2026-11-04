@@ -1,7 +1,6 @@
 import { UserModel } from "../../database/models/index.js"
 import { exception, myHash, myCompare, encryption } from "../../common/index.js";
-import jwt from "jsonwebtoken";
-import configService from "../../config/config.service.js";
+import { createToken } from "../../common/security/index.js";
 
 
 
@@ -21,6 +20,7 @@ export const login = async ({ email, password }) => {
     if (!user) exception.notFoundException({ message: "User not found" });
     let matchPassword = await myCompare({ plainText: password, encrypted: user.password });
     if (!matchPassword) exception.unAuthorizedException({ message: "Invalid credentials" });
-    let token = jwt.sign({ sub: user.id }, configService.jwtSecret);
+    // let token = jwt.sign({ sub: user.id }, configService.jwtSecret);
+    let token = createToken({ payload: { sub: user.id } });
     return { token };
 }
