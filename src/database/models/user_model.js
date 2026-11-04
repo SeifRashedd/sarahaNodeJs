@@ -1,5 +1,5 @@
 import mongoose from "mongoose";
-import { genderEnum } from "../../common/index.js";
+import { genderEnum } from "../../common/enums/gender_enum.js";
 
 const userSchema = new mongoose.Schema({
     firstName: {

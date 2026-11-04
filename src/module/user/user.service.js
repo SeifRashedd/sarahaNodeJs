@@ -4,10 +4,10 @@ import { verifyToken } from "../../common/security/index.js";
 
 
 
-export const profile = async (token) => {
-    // let { sub } = jwt.verify(token, configService.jwtSecret)
 
+
+export const updateUser = async (token , data) => {
     let { sub } = verifyToken({ token })
-    let user = await UserModel.findById(sub)
+    let user = await UserModel.findByIdAndUpdate(sub , data)
     return user
 }
