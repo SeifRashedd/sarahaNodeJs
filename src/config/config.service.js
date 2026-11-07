@@ -16,7 +16,10 @@ export default {
     encKey: process.env.ENC_KEY,
     encIvLength: Number(process.env.ENC_IV_LENGTH),
     encAlgo: process.env.ENC_IV_ALGO,
-    jwtSecret: process.env.JWT_SECRET
+    jwt_access_secret: process.env.JWT_ACCESS_SECRET,
+    jwt_refresh_secret: process.env.JWT_REFRESH_SECRET,
+    jwt_access_exp: Number(process.env.JWT_ACCESS_EXP),
+    jwt_refresh_exp: process.env.JWT_REFRESH_EXP
 }
 
 

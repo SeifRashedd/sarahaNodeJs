@@ -1,1 +1,2 @@
 export {genderEnum} from './gender_enum.js'
+export {tokenTypeEnum} from './tokenType_enum.js'
