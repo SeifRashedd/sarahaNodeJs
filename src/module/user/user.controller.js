@@ -14,10 +14,8 @@ userRouter.get("/profile", async (req, res) => {
 
 
 userRouter.put("/update_user", async (req, res) => {
-    let user = await us.updateUser(req.body)
-    response({
-        res, user, message: "user update successfully"
-    })
+    let user = await us.updateUser(req.user, req.body)
+    response(res, 200, user, "user update successfully")
 })
 
 

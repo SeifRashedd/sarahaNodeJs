@@ -1,12 +1,10 @@
-import { UserModel } from "../../database/models/index.js"
-import { verifyToken } from "../../common/security/index.js";
+import us from './../../database/repo/user.repo.js'
 
 
-
-
-
-export const updateUser = async (data) => {
-    let { sub } = verifyToken({ token })
-    let user = await UserModel.findByIdAndUpdate(user_id , data)
+export const updateUser = async (userData, data) => {
+    let user = await us.findByIdAndUpdate({
+        id: userData._id,
+        update: data
+    })
     return user
 }
