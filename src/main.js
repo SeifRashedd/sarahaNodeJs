@@ -3,6 +3,7 @@ import confgService from './config/config.service.js';
 import { dpconnect } from './database/connection.js';
 import { errHandler } from "./common/index.js";
 import { authRouter, userRouter } from "./module/index.js";
+import cors from 'cors'
 
 
 
@@ -11,7 +12,7 @@ const port = confgService.port
 
 
 await dpconnect();
-app.use(express.json());
+app.use(cors(), express.json());
 app.use('/auth', authRouter);
 app.use('/user', userRouter);
 

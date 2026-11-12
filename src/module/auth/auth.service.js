@@ -1,8 +1,13 @@
-import { exception, myHash, myCompare, encryption } from "../../common/index.js";
+import { exception, myHash, myCompare, encryption, ProviderEnum } from "../../common/index.js";
 import { createTokens } from "../../common/security/index.js";
 import configService from "../../config/config.service.js";
-import { conflictException } from "../../common/utils/exception.js";
+import { conflictException, unAuthorizedException } from "../../common/utils/exception.js";
 import ur from './../../database/repo/user.repo.js'
+import { OAuth2Client } from 'google-auth-library';
+
+
+const client = new OAuth2Client();
+
 
 
 export const signup = async (data) => {
@@ -29,7 +34,6 @@ export const login = async ({ email, password }) => {
 
 
 export const rotateToken = (user, payload) => {
-    // access and refresh tokens are created together, so they share the same iat
     let accessIAT = payload.iat * 1000
     let accessEXPIN = configService.jwt_access_exp * 1000
     let accessEXPAt = accessEXPIN + accessIAT
@@ -40,3 +44,24 @@ export const rotateToken = (user, payload) => {
     let tokens = createTokens({ payload: { sub: user.id } });
     return { tokens };
 }
+
+export const loginWithGoogle = async (data) => {
+    console.log(data)
+    const ticket = await client.verifyIdToken({
+        idToken: data.idToken,
+        audience: WEB_CLIENT_ID,
+
+    });
+    let { email, email_verified, picture, name } = payload
+    if (!email_verified) unAuthorizedException("This email is not verified")
+    let status = 2000
+    let user = await ur.findOne({
+        filter: { email }
+    })
+    if (!user) {
+        user = ur.create({ data: { email, image: picture, userName: name, provider: ProviderEnum.google } })
+        status = 201
+    }
+    return { tokens: createTokens({ payload: { sub: user.id } }), status }
+}
+

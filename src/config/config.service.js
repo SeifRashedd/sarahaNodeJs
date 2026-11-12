@@ -19,7 +19,8 @@ export default {
     jwt_access_secret: process.env.JWT_ACCESS_SECRET,
     jwt_refresh_secret: process.env.JWT_REFRESH_SECRET,
     jwt_access_exp: Number(process.env.JWT_ACCESS_EXP),
-    jwt_refresh_exp: process.env.JWT_REFRESH_EXP
+    jwt_refresh_exp: process.env.JWT_REFRESH_EXP,
+    // google_client_id: process.env.
 }
 
 

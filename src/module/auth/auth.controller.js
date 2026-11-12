@@ -25,6 +25,10 @@ authRouter.post('/rotate_token', auth({ tokenType: tokenTypeEnum.REFRESH }), (re
     response(res, 200, tokens, 'token rotated')
 })
 
+authRouter.post('/loginWithGoogle', async (req, res, next) => {
+    let { tokens, status } = await as.loginWithGoogle(req.body)
+    response(res, status, tokens, "login done", status == 200 ? 'user logged in' : 'user created');
+})
 
 
 
