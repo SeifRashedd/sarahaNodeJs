@@ -1,20 +1,21 @@
 import { Router } from "express";
-import { response, tokenTypeEnum } from "../../common/index.js";
+import { response, tokenTypeEnum, validation } from "../../common/index.js";
 import * as as from './auth.service.js';
 import { auth } from "../../common/middleware/authentication.js";
+import { loginSchema, signupSchema } from "./auth.validation.js";
 
 export const authRouter = Router();
 
 
 
-authRouter.post("/signup", async (req, res) => {
-    let user = await as.signup(req.body);
+authRouter.post("/signup", validation(signupSchema), async (req, res) => {
+
+    let user = await as.signup(req.validate);
     response(res, 201, user, "User created successfully");
 })
 
-
-authRouter.post("/login", async (req, res) => {
-    let user = await as.login(req.body);
+authRouter.post("/login", validation(loginSchema), async (req, res) => {
+    let user = await as.login(req.validate);
     response(res, 200, user, "User logged in  successfully");
 })
 

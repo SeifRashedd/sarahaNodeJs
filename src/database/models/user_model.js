@@ -29,8 +29,8 @@ const userSchema = new mongoose.Schema({
     },
     password: {
         type: String,
-        required: function (value) {
-            return value.provider == ProviderEnum.system
+        required: function () {
+            return this.provider == ProviderEnum.system
         },
         // select: false
     },
@@ -40,7 +40,7 @@ const userSchema = new mongoose.Schema({
     provider: {
         type: Number,
         enum: Object.values(ProviderEnum),
-        default: genderEnum.system,
+        default: ProviderEnum.system,
     },
     image: String
 }, {
