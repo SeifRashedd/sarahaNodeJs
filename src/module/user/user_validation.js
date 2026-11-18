@@ -1,12 +1,11 @@
-import mongoose from 'mongoose'
 import { z } from 'zod'
 import { gf } from '../../common/index.js'
 
-export const userProfileSchema = z.object({
+export const userProfileSchema = (lang) => z.object({
     params: z.strictObject({
-        userId: gf.id
+        userId: gf.id(lang)
     }),
-    query: z.strictObject({
-        data: z.string()
+    query: z.object({
+        data: z.string().optional()
     })
 })

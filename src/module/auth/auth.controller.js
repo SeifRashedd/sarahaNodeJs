@@ -10,12 +10,12 @@ export const authRouter = Router();
 
 authRouter.post("/signup", validation(signupSchema), async (req, res) => {
 
-    let user = await as.signup(req.validate);
+    let user = await as.signup(req.validate.body);
     response(res, 201, user, "User created successfully");
 })
 
 authRouter.post("/login", validation(loginSchema), async (req, res) => {
-    let user = await as.login(req.validate);
+    let user = await as.login(req.validate.body);
     response(res, 200, user, "User logged in  successfully");
 })
 
