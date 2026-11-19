@@ -1,5 +1,6 @@
 import mongoose from "mongoose";
 import configService from '../config/config.service.js'
+import { client } from "./redis_connection.js";
 
 export const dpconnect = async () => {
     try {
@@ -9,8 +10,9 @@ export const dpconnect = async () => {
             connectTimeoutMS: 10000,
         });
         await mongoose.syncIndexes();
-
         console.log("MongoDB connected successfully");
+        await client.connect()
+        console.log("Redis connect");
     } catch (error) {
         console.error("MongoDB connection error:", error);
         process.exit(1);
