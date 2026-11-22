@@ -42,7 +42,8 @@ const userSchema = new mongoose.Schema({
         enum: Object.values(ProviderEnum),
         default: ProviderEnum.system,
     },
-    image: String
+    image: String,
+    changeCredentialAt : Date
 }, {
     timestamps: true,
     strict: true,

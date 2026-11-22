@@ -21,8 +21,8 @@ authRouter.post("/login", validation(loginSchema), async (req, res) => {
 
 
 
-authRouter.post('/rotate_token', auth({ tokenType: tokenTypeEnum.REFRESH }), (req, res, next) => {
-    let tokens = as.rotateToken(req.user, req.payload)
+authRouter.post('/rotate_token', auth({ tokenType: tokenTypeEnum.REFRESH }), async (req, res, next) => {
+    let tokens = await as.rotateToken(req.user, req.payload)
     response(res, 200, tokens, 'token rotated')
 })
 
@@ -31,5 +31,11 @@ authRouter.post('/loginWithGoogle', async (req, res, next) => {
     response(res, status, tokens, "login done", status == 200 ? 'user logged in' : 'user created');
 })
 
+
+
+authRouter.post('/logout', auth({ tokenType: tokenTypeEnum.ACCESS }), async (req, res, next) => {
+    await as.logout(req.payload, req.body)
+    response(res, 200, null, "User logged out successfully")
+})
 
 

@@ -36,6 +36,10 @@ export default (model) => {
             return await model.deleteOne(filter)
         },
 
+        delByPrefix: async ({ prefix }) => {
+            return await model.deleteMany({ key: { $regex: prefix } })
+        },
+
         findOneAndDelete: async ({ filter }) => {
             let data = await model.findOneAndDelete(filter)
             return data

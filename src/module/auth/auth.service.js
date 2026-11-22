@@ -1,9 +1,11 @@
-import { exception, myHash, myCompare, encryption, ProviderEnum } from "../../common/index.js";
+import { exception, myHash, myCompare, encryption, ProviderEnum, logoutEnum } from "../../common/index.js";
 import { createTokens } from "../../common/security/index.js";
 import configService from "../../config/config.service.js";
 import { conflictException, unAuthorizedException } from "../../common/utils/exception.js";
 import ur from './../../database/repo/user.repo.js'
 import { OAuth2Client } from 'google-auth-library';
+import { set, delByPrefix } from "../../common/service/cache.service.js";
+import { userRevokeKey, userKeyBase } from "../../common/service/cahce_key.service.js";
 
 
 const client = new OAuth2Client();
@@ -33,7 +35,7 @@ export const login = async ({ email, password }) => {
 }
 
 
-export const rotateToken = (user, payload) => {
+export const rotateToken = async (user, payload) => {
     let accessIAT = payload.iat * 1000
     let accessEXPIN = configService.jwt_access_exp * 1000
     let accessEXPAt = accessEXPIN + accessIAT
@@ -42,6 +44,9 @@ export const rotateToken = (user, payload) => {
         conflictException({ message: "access token still valid" })
     }
     let tokens = createTokens({ payload: { sub: user.id } });
+
+    await revokeToken(payload)
+
     return { tokens };
 }
 
@@ -65,3 +70,37 @@ export const loginWithGoogle = async (data) => {
     return { tokens: createTokens({ payload: { sub: user.id } }), status }
 }
 
+
+export const logout = async (payloads, { action = logoutEnum.DEVICE }) => {
+    console.log(action)
+    switch (action) {
+        case logoutEnum.DEVICE:
+            return await revokeToken(payloads)
+            break
+        default:
+            await ur.updateOne({ filter: { _id: payloads.sub }, update: { changCredentialAt: Date.now() } })
+            await delByPrefix({ prefix: `${userKeyBase({ userId: payloads.sub })}*` })
+            return
+            break   
+
+
+
+    }
+
+
+}
+
+
+export const revokeToken = async (payload) => {
+    let { exp, jti, sub } = payload
+    let nowInSec = Math.ceil(Date.now() / 1000)
+    let tti = exp - nowInSec
+    let revokeKey = userRevokeKey({ userId: sub, jti })
+
+    await set({
+        key: revokeKey,
+        value: jti,
+        ttl: tti
+    })
+    return { ...payload, nowInSec, tti }
+}

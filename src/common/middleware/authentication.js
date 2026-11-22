@@ -11,7 +11,7 @@ export const auth = ({ tokenType = tokenTypeEnum.ACCESS } = {}) => {
             exception.unAuthorizedException({ message: "Token not provided" })
 
         }
-        let payload = verifyToken({ token, tokenType })
+        let payload = await verifyToken({ token, tokenType })
         req.user = await ur.findById({ id: payload.sub })
         req.payload = payload
         next()

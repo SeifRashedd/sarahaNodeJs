@@ -4,15 +4,18 @@ export const set = async ({ key, value, ttl }) => {
     if (typeof value !== 'string') {
         value = JSON.stringify(value)
     }
-    return await client.set(key, value, { EX: ttl })
+    const options = (typeof ttl === 'number' && ttl > 0) ? { EX: ttl } : undefined
+    return await client.set(key, value, options)
 }
 
 
 export const get = async ({ key }) => {
+    const data = await client.get(key)
+    if (!data) return null
     try {
-        return JSON.parse(await client.get(key))
+        return JSON.parse(data)
     } catch {
-        return await client.get(key)
+        return data
     }
 }
 
@@ -41,5 +44,7 @@ export const keys = async ({ prefix }) => {
 
 
 export const delByPrefix = async ({ prefix }) => {
-    return await client.del(await keys({ prefix }))
+    const foundKeys = await keys({ prefix })
+    if (!foundKeys || foundKeys.length === 0) return 0
+    return await client.del(foundKeys)
 }
