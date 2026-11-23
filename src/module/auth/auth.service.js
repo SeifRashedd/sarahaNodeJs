@@ -4,8 +4,8 @@ import configService from "../../config/config.service.js";
 import { conflictException, unAuthorizedException } from "../../common/utils/exception.js";
 import ur from './../../database/repo/user.repo.js'
 import { OAuth2Client } from 'google-auth-library';
-import { set, delByPrefix } from "../../common/service/cache.service.js";
-import { userRevokeKey, userKeyBase } from "../../common/service/cahce_key.service.js";
+import { set, get, delByPrefix, del } from "../../common/service/cache.service.js";
+import { userRevokeKey, userKeyBase, userOtpKey } from "../../common/service/cahce_key.service.js";
 import { emailEvent } from "../../common/events/email_event.js";
 
 
@@ -22,10 +22,20 @@ export const signup = async (data) => {
     if (data.phone) data.phone = await encryption({ plainText: data.phone });
     let user = await ur.create({ data });
 
-    emailEvent.emit(emailEventsEnum.SIGNUP, {
-        email: user.email,
-        userName: user.userName,
-    })
+    // confirm email (OTP) — disabled for now until an email account is set up to send from
+    // let otp = Math.trunc(Math.random() * 1000000).toString().padStart(4, "5")
+
+    // await set({
+    //     key: userOtpKey({ userId: user.id }),
+    //     value: otp,
+    //     ttl: 300
+    // })
+
+    // emailEvent.emit(emailEventsEnum.SIGNUP, {
+    //     email: user.email,
+    //     userName: user.userName,
+    //     otp,
+    // })
     return user;
 }
 
@@ -36,6 +46,8 @@ export const login = async ({ email, password }) => {
     if (!user) exception.notFoundException({ message: "User not found" });
     let matchPassword = await myCompare({ plainText: password, encrypted: user.password });
     if (!matchPassword) exception.unAuthorizedException({ message: "Invalid credentials" });
+    // block login until the email is confirmed — enable together with the OTP in signup
+    // if (!user.confirmEmail) exception.forbiddenException({ message: "please confirm your email first" })
     let tokens = createTokens({ payload: { sub: user.id } });
     return { tokens };
 }
@@ -60,17 +72,17 @@ export const loginWithGoogle = async (data) => {
     console.log(data)
     const ticket = await client.verifyIdToken({
         idToken: data.idToken,
-        audience: WEB_CLIENT_ID,
+        audience: configService.google_client_id,
 
     });
-    let { email, email_verified, picture, name } = payload
-    if (!email_verified) unAuthorizedException("This email is not verified")
-    let status = 2000
+    let { email, email_verified, picture, name } = ticket.getPayload()
+    if (!email_verified) unAuthorizedException({ message: "This email is not verified" })
+    let status = 200
     let user = await ur.findOne({
         filter: { email }
     })
     if (!user) {
-        user = ur.create({ data: { email, image: picture, userName: name, provider: ProviderEnum.google } })
+        user = await ur.create({ data: { email, image: picture, userName: name, provider: ProviderEnum.google } })
         status = 201
     }
     return { tokens: createTokens({ payload: { sub: user.id } }), status }
@@ -84,10 +96,10 @@ export const logout = async (payloads, { action = logoutEnum.DEVICE }) => {
             return await revokeToken(payloads)
             break
         default:
-            await ur.updateOne({ filter: { _id: payloads.sub }, update: { changCredentialAt: Date.now() } })
+            await ur.updateOne({ filter: { _id: payloads.sub }, update: { changeCredentialAt: Date.now() } })
             await delByPrefix({ prefix: `${userKeyBase({ userId: payloads.sub })}*` })
             return
-            break   
+            break
     }
 
 
@@ -106,4 +118,24 @@ export const revokeToken = async (payload) => {
         ttl: tti
     })
     return { ...payload, nowInSec, tti }
+}
+
+
+export const confirmEmail = async ({ email, otp }) => {
+    let user = await ur.findOne({ filter: { email } })
+    if (!user) exception.notFoundException({ message: "user not found" })
+    if (user.confirmEmail) exception.badRequestException({ message: "user already confirmed" })
+
+    let stored = await get({
+        key: userOtpKey({ userId: user.id }),
+    })
+
+    if (!stored) exception.badRequestException({ message: "otp expired" })
+    if (stored != otp) exception.unAuthorizedException({ message: "invalid otp" })
+
+    user.confirmEmail = new Date()
+    await user.save()
+    await del({
+        key: userOtpKey({ userId: user.id }),
+    })
 }

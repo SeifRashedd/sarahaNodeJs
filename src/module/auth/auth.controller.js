@@ -39,3 +39,12 @@ authRouter.post('/logout', auth({ tokenType: tokenTypeEnum.ACCESS }), async (req
 })
 
 
+
+
+
+
+authRouter.post('/confirm_email', async (req, res, next) => {
+    await as.confirmEmail(req.body)
+
+    response(res, 200, null, "your email confirmed")
+})

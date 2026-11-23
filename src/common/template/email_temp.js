@@ -12,7 +12,7 @@ const escapeHtml = (value = "") =>
     })[char])
 
 
-export const emailTemp = ({ title, userName, message }) => `<!DOCTYPE html>
+export const emailTemp = ({ title, userName, message, otp, otpExpiresIn }) => `<!DOCTYPE html>
 <html lang="en">
 <head>
     <meta charset="UTF-8">
@@ -40,6 +40,14 @@ export const emailTemp = ({ title, userName, message }) => `<!DOCTYPE html>
                             <p style="margin:0; color:#374151; font-size:16px; line-height:1.6;">${escapeHtml(message)}</p>
                         </td>
                     </tr>
+
+                    <!-- otp (only when an otp is passed) -->
+                    ${otp ? `<tr>
+                        <td style="padding:0 32px 32px; text-align:center;">
+                            <div style="display:inline-block; padding:16px 28px; background-color:#eef2ff; border:1px dashed #4f46e5; border-radius:10px; color:#4f46e5; font-size:32px; font-weight:bold; letter-spacing:8px; font-family:'Courier New', monospace;">${escapeHtml(otp)}</div>
+                            ${otpExpiresIn ? `<p style="margin:12px 0 0; color:#6b7280; font-size:13px;">This code expires in ${escapeHtml(otpExpiresIn)} minutes.</p>` : ""}
+                        </td>
+                    </tr>` : ""}
 
                     <!-- footer -->
                     <tr>

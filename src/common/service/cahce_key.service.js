@@ -7,3 +7,9 @@ export const userKeyBase = ({ userId, jti }) => {
 export const userRevokeKey = ({ userId, jti }) => {
   return `${userKeyBase({ userId })}::revoke::${jti}`
 }
+
+
+
+export const userOtpKey = ({ userId }) => {
+  return `${userKeyBase({ userId })}::otp`
+}

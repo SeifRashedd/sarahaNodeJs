@@ -43,7 +43,8 @@ const userSchema = new mongoose.Schema({
         default: ProviderEnum.system,
     },
     image: String,
-    changeCredentialAt : Date
+    changeCredentialAt : Date,
+    confirmEmail : Date
 }, {
     timestamps: true,
     strict: true,

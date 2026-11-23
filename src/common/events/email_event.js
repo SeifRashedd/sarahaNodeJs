@@ -7,15 +7,17 @@ import { emailTemp } from "../template/index.js";
 
 export const emailEvent = new EventEmitter();
 
-emailEvent.on(emailEventsEnum.SIGNUP, async ({ email, userName }) => {
+emailEvent.on(emailEventsEnum.SIGNUP, async ({ email, userName, otp, otpExpiresIn }) => {
     try {
         await sendMail({
             to: email,
-            subject: "Welcome to Saraha",
+            subject: "Welcome to Saraha - confirm your email",
             html: emailTemp({
                 title: "Welcome to Saraha",
                 userName,
-                message: "Your account was created successfully. You can now log in and start receiving anonymous messages."
+                message: "Your account was created successfully. Use the code below to confirm your email.",
+                otp,
+                otpExpiresIn
             })
         })
     } catch (error) {

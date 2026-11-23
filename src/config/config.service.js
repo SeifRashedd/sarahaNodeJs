@@ -21,6 +21,7 @@ export default {
     jwt_access_exp: Number(process.env.JWT_ACCESS_EXP),
     jwt_refresh_exp: process.env.JWT_REFRESH_EXP,
     // google_client_id: process.env.
+    google_client_id: process.env.GOOGLE_CLIENT_ID,
     redisUri: process.env.REDIS_URI,
     email_user: process.env.EMAIL_USER,
     pass_user: process.env.EMAIL_PASS,
