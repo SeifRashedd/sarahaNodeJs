@@ -1,4 +1,4 @@
-import { exception, myHash, myCompare, encryption, ProviderEnum, logoutEnum } from "../../common/index.js";
+import { exception, myHash, myCompare, encryption, ProviderEnum, logoutEnum, emailEventsEnum } from "../../common/index.js";
 import { createTokens } from "../../common/security/index.js";
 import configService from "../../config/config.service.js";
 import { conflictException, unAuthorizedException } from "../../common/utils/exception.js";
@@ -6,6 +6,7 @@ import ur from './../../database/repo/user.repo.js'
 import { OAuth2Client } from 'google-auth-library';
 import { set, delByPrefix } from "../../common/service/cache.service.js";
 import { userRevokeKey, userKeyBase } from "../../common/service/cahce_key.service.js";
+import { emailEvent } from "../../common/events/email_event.js";
 
 
 const client = new OAuth2Client();
@@ -20,6 +21,11 @@ export const signup = async (data) => {
     data.password = await myHash({ plainText: data.password });
     if (data.phone) data.phone = await encryption({ plainText: data.phone });
     let user = await ur.create({ data });
+
+    emailEvent.emit(emailEventsEnum.SIGNUP, {
+        email: user.email,
+        userName: user.userName,
+    })
     return user;
 }
 
@@ -82,9 +88,6 @@ export const logout = async (payloads, { action = logoutEnum.DEVICE }) => {
             await delByPrefix({ prefix: `${userKeyBase({ userId: payloads.sub })}*` })
             return
             break   
-
-
-
     }
 
 

@@ -22,6 +22,10 @@ export default {
     jwt_refresh_exp: process.env.JWT_REFRESH_EXP,
     // google_client_id: process.env.
     redisUri: process.env.REDIS_URI,
+    email_user: process.env.EMAIL_USER,
+    pass_user: process.env.EMAIL_PASS,
+
+
 }
 
 
