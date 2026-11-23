@@ -22,20 +22,19 @@ export const signup = async (data) => {
     if (data.phone) data.phone = await encryption({ plainText: data.phone });
     let user = await ur.create({ data });
 
-    // confirm email (OTP) — disabled for now until an email account is set up to send from
-    // let otp = Math.trunc(Math.random() * 1000000).toString().padStart(4, "5")
+    let otp = Math.trunc(Math.random() * 1000000).toString().padStart(4, "5")
 
-    // await set({
-    //     key: userOtpKey({ userId: user.id }),
-    //     value: otp,
-    //     ttl: 300
-    // })
+    await set({
+        key: userOtpKey({ userId: user.id }),
+        value: otp,
+        ttl: 300
+    })
 
-    // emailEvent.emit(emailEventsEnum.SIGNUP, {
-    //     email: user.email,
-    //     userName: user.userName,
-    //     otp,
-    // })
+    emailEvent.emit(emailEventsEnum.SIGNUP, {
+        email: user.email,
+        userName: user.userName,
+        otp,
+    })
     return user;
 }
 
@@ -46,8 +45,7 @@ export const login = async ({ email, password }) => {
     if (!user) exception.notFoundException({ message: "User not found" });
     let matchPassword = await myCompare({ plainText: password, encrypted: user.password });
     if (!matchPassword) exception.unAuthorizedException({ message: "Invalid credentials" });
-    // block login until the email is confirmed — enable together with the OTP in signup
-    // if (!user.confirmEmail) exception.forbiddenException({ message: "please confirm your email first" })
+    if (!user.confirmEmail) exception.forbiddenException({ message: "please confirm your email first" })
     let tokens = createTokens({ payload: { sub: user.id } });
     return { tokens };
 }
