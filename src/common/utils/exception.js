@@ -28,7 +28,9 @@ export const badRequestException = ({ message = 'Bad Request' }) => {
 }
 
 
-
+export const tooManyRequestsException = ({ message = 'Too Many Requests' }) => {
+    mainException({ message, cause: 429 });
+}
 
 
 

@@ -40,6 +40,10 @@ let messages = {
         ar: 'النوع غير صحيح، لازم يكون 0 (ذكر) او 1 (انثى)',
         en: 'invalid gender, must be 0 (male) or 1 (female)'
     },
+    invalidOtp: {
+        ar: 'الكود لازم يكون من 4 لـ 6 أرقام',
+        en: 'otp must be 4 to 6 digits'
+    },
 }
 
 

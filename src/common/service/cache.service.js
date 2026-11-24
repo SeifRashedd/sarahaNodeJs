@@ -9,6 +9,11 @@ export const set = async ({ key, value, ttl }) => {
 }
 
 
+export const exists = async ({ key }) => {
+    return await client.exists(key)
+}
+
+
 export const get = async ({ key }) => {
     const data = await client.get(key)
     if (!data) return null
@@ -22,6 +27,7 @@ export const get = async ({ key }) => {
 export const incr = async ({ key, incr = 1 }) => {
     return await client.incrBy(key, incr)
 }
+
 
 
 export const ttl = async ({ key }) => {

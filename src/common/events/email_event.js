@@ -24,3 +24,21 @@ emailEvent.on(emailEventsEnum.SIGNUP, async ({ email, userName, otp, otpExpiresI
         console.log("signup email error:", error.message)
     }
 })
+
+emailEvent.on(emailEventsEnum.FORGET, async ({ email, userName, otp, otpExpiresIn }) => {
+    try {
+        await sendMail({
+            to: email,
+            subject: "Forget Password",
+            html: emailTemp({
+                title: "Forget Password",
+                userName,
+                message: "Reset your password using the code below.",
+                otp,
+                otpExpiresIn
+            })
+        })
+    } catch (error) {
+        console.log("forget password email error:", error.message)
+    }
+})

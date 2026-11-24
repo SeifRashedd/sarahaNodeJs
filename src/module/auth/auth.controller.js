@@ -48,3 +48,33 @@ authRouter.post('/confirm_email', async (req, res, next) => {
 
     response(res, 200, null, "your email confirmed")
 })
+
+
+
+
+authRouter.post('/resend_otp', async (req, res, next) => {
+    await as.resendOtp(req.body)
+    response(res, 200, null, "otp sent successfully")
+})
+
+
+
+
+authRouter.post('/forget_password', async (req, res, next) => {
+    await as.forgetPassword(req.body)
+    response(res, 200, null, "otp sent successfully")
+})
+
+
+
+
+authRouter.post('/verify_forget_password_otp', async (req, res, next) => {
+    await as.verifyForgetPasswordOtp(req.body)
+    response(res, 200, null, "otp verified successfully")
+})
+
+
+authRouter.post('/reset_password', async (req, res, next) => {
+    await as.resetPassword(req.body)
+    response(res, 200, null, "password reset successfully")
+})

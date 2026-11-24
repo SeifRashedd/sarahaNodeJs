@@ -1,0 +1,338 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Saraha API Tester</title>
+<style>
+  :root {
+    --bg: #f6f7fb; --card: #ffffff; --text: #1d2130; --muted: #6b7185; --line: #e3e6ef;
+    --accent: #4f46e5; --accent-text: #ffffff; --input: #ffffff; --code-bg: #f1f3f9;
+    --ok: #15803d; --ok-bg: #dcfce7; --warn: #b45309; --warn-bg: #fef3c7;
+    --err: #b91c1c; --err-bg: #fee2e2; --idle: #6b7185; --idle-bg: #eceef4;
+  }
+  @media (prefers-color-scheme: dark) {
+    :root {
+      --bg: #0f1117; --card: #181b24; --text: #e6e8ef; --muted: #9298ab; --line: #2a2f3d;
+      --accent: #818cf8; --accent-text: #0f1117; --input: #11141c; --code-bg: #11141c;
+      --ok: #4ade80; --ok-bg: #12301d; --warn: #fbbf24; --warn-bg: #33270b;
+      --err: #f87171; --err-bg: #3a1414; --idle: #9298ab; --idle-bg: #242836;
+    }
+  }
+  * { box-sizing: border-box; }
+  body { margin: 0; background: var(--bg); color: var(--text); font: 14px/1.5 system-ui, -apple-system, "Segoe UI", sans-serif; }
+  header { position: sticky; top: 0; z-index: 2; background: var(--card); border-bottom: 1px solid var(--line);
+    padding: 12px 16px; display: flex; flex-wrap: wrap; gap: 12px; align-items: center; }
+  header h1 { font-size: 16px; margin: 0 12px 0 0; }
+  header label { display: flex; align-items: center; gap: 6px; color: var(--muted); }
+  .dot { width: 9px; height: 9px; border-radius: 50%; background: var(--idle); display: inline-block; }
+  .dot.on { background: var(--ok); } .dot.off { background: var(--err); }
+  main { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); gap: 16px; padding: 16px; max-width: 1300px; margin: 0 auto; }
+  @media (max-width: 900px) { main { grid-template-columns: minmax(0, 1fr); } }
+  .col { display: flex; flex-direction: column; gap: 12px; min-width: 0; }
+  .card { background: var(--card); border: 1px solid var(--line); border-radius: 10px; padding: 14px; }
+  .card h2 { font-size: 14px; margin: 0 0 10px; display: flex; justify-content: space-between; gap: 8px; }
+  .card h2 small { color: var(--muted); font-weight: 400; font-family: ui-monospace, Menlo, monospace; }
+  .hint { color: var(--muted); font-size: 12px; margin: -4px 0 10px; }
+  .row { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
+  @media (max-width: 520px) { .row { grid-template-columns: 1fr; } }
+  .field { display: flex; flex-direction: column; gap: 3px; margin-bottom: 8px; }
+  .field span { font-size: 12px; color: var(--muted); }
+  input, select { width: 100%; padding: 7px 9px; border: 1px solid var(--line); border-radius: 7px; background: var(--input); color: var(--text); font: inherit; }
+  header input { width: 220px; max-width: 100%; } header select { width: auto; }
+  button { padding: 7px 14px; border: 0; border-radius: 7px; background: var(--accent); color: var(--accent-text); font: inherit; font-weight: 600; cursor: pointer; }
+  button.ghost { background: transparent; color: var(--muted); border: 1px solid var(--line); font-weight: 400; }
+  button:disabled { opacity: .5; cursor: wait; }
+  .actions { display: flex; gap: 8px; flex-wrap: wrap; }
+  .tokens code { display: block; background: var(--code-bg); border-radius: 6px; padding: 6px 8px; margin: 3px 0 8px;
+    font-size: 11px; overflow-wrap: anywhere; max-height: 54px; overflow: auto; color: var(--muted); }
+  .status { display: inline-block; padding: 1px 8px; border-radius: 99px; font-weight: 600; font-size: 12px; }
+  .s2 { background: var(--ok-bg); color: var(--ok); } .s4 { background: var(--warn-bg); color: var(--warn); }
+  .s5 { background: var(--err-bg); color: var(--err); } .s0 { background: var(--idle-bg); color: var(--idle); }
+  .resmeta { display: flex; gap: 8px; align-items: center; flex-wrap: wrap; margin-bottom: 8px; font-family: ui-monospace, Menlo, monospace; font-size: 12px; }
+  pre { background: var(--code-bg); border-radius: 8px; padding: 10px; margin: 0; overflow: auto; max-height: 420px; font-size: 12px; white-space: pre-wrap; overflow-wrap: anywhere; }
+  details { margin-top: 8px; } summary { cursor: pointer; color: var(--muted); font-size: 12px; }
+  .history { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: 4px; }
+  .history li { display: flex; gap: 8px; align-items: center; padding: 5px 6px; border-radius: 6px; cursor: pointer; font-family: ui-monospace, Menlo, monospace; font-size: 12px; }
+  .history li:hover { background: var(--code-bg); }
+  .history .path { flex: 1; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+  .history time { color: var(--muted); }
+  .empty { color: var(--muted); font-size: 13px; }
+</style>
+</head>
+<body>
+
+<header>
+  <h1>Saraha API Tester</h1>
+  <label>Server <input id="base" value="http://localhost:3000"> <span id="dot" class="dot" title="checking..."></span></label>
+  <label>Accept-Language
+    <select id="lang">
+      <option value="1">1 — English</option>
+      <option value="0">0 — عربي</option>
+    </select>
+  </label>
+</header>
+
+<main>
+  <!-- left: requests -->
+  <div class="col">
+
+    <form class="card" data-action="signup">
+      <h2>1. Signup <small>POST /auth/signup</small></h2>
+      <p class="hint">Use a real email you can open — the OTP is sent to it.</p>
+      <div class="row">
+        <label class="field"><span>userName (first last)</span><input name="userName" placeholder="Seif Rashed" required></label>
+        <label class="field"><span>email</span><input name="email" type="email" required></label>
+        <label class="field"><span>password (5–20)</span><input name="password" type="text" required></label>
+        <label class="field"><span>phone (E.164)</span><input name="phone" placeholder="+201012345678" required></label>
+        <label class="field"><span>gender</span>
+          <select name="gender"><option value="0">0 — male</option><option value="1">1 — female</option></select>
+        </label>
+      </div>
+      <div class="actions"><button>Send</button></div>
+    </form>
+
+    <form class="card" data-action="confirm">
+      <h2>2. Confirm email <small>POST /auth/confirm_email</small></h2>
+      <p class="hint">Wrong code → 401 with trials left. 5 wrong codes → 429 blocked for 15 min (resend blocked too).</p>
+      <div class="row">
+        <label class="field"><span>email</span><input name="email" type="email" required></label>
+        <label class="field"><span>otp (from the email)</span><input name="otp" inputmode="numeric" required></label>
+      </div>
+      <div class="actions"><button>Send</button></div>
+    </form>
+
+    <form class="card" data-action="resend">
+      <h2>3. Resend OTP <small>POST /auth/resend_otp</small></h2>
+      <p class="hint">409 while the old code is still valid (5 min). After 5 sends → 429 blocked for 15 min.</p>
+      <label class="field"><span>email</span><input name="email" type="email" required></label>
+      <div class="actions"><button>Send</button></div>
+    </form>
+
+    <form class="card" data-action="login">
+      <h2>4. Login <small>POST /auth/login</small></h2>
+      <p class="hint">403 if the email is not confirmed yet. Tokens are saved automatically.</p>
+      <div class="row">
+        <label class="field"><span>email</span><input name="email" type="email" required></label>
+        <label class="field"><span>password</span><input name="password" type="text" required></label>
+      </div>
+      <div class="actions"><button>Send</button></div>
+    </form>
+
+    <form class="card" data-action="forget">
+      <h2>5. Forget password <small>POST /auth/forget_password</small></h2>
+      <p class="hint">Sends a reset code to the email. After 5 sends → 429 blocked for 15 min.</p>
+      <label class="field"><span>email</span><input name="email" type="email" required></label>
+      <div class="actions"><button>Send</button></div>
+    </form>
+
+    <form class="card" data-action="verifyForget">
+      <h2>6. Verify reset code <small>POST /auth/verify_forget_password_otp</small></h2>
+      <p class="hint">Right code → you have 5 min to do step 7. Wrong code → 401, 5 wrong → 429.</p>
+      <div class="row">
+        <label class="field"><span>email</span><input name="email" type="email" required></label>
+        <label class="field"><span>otp (from the email)</span><input name="otp" inputmode="numeric" required></label>
+      </div>
+      <div class="actions"><button>Send</button></div>
+    </form>
+
+    <form class="card" data-action="reset">
+      <h2>7. Reset password <small>POST /auth/reset_password</small></h2>
+      <p class="hint">403 if step 6 wasn't done. After reset, old tokens stop working (logout everywhere).</p>
+      <div class="row">
+        <label class="field"><span>email</span><input name="email" type="email" required></label>
+        <label class="field"><span>newPassword (5–20)</span><input name="newPassword" type="text" required></label>
+      </div>
+      <div class="actions"><button>Send</button></div>
+    </form>
+
+    <div class="card">
+      <h2>8. Logged-in requests</h2>
+      <p class="hint">Use the saved tokens (login first).</p>
+      <div class="actions">
+        <button data-action="profile">GET /user/profile</button>
+        <button data-action="rotate" class="ghost">POST /auth/rotate_token</button>
+        <button data-action="logout-device" class="ghost">Logout this device</button>
+        <button data-action="logout-all" class="ghost">Logout all devices</button>
+      </div>
+      <p class="hint" style="margin:10px 0 0">rotate_token returns 409 until the access token expires.</p>
+    </div>
+
+  </div>
+
+  <!-- right: output -->
+  <div class="col">
+    <div class="card tokens">
+      <h2>Tokens <button type="button" id="clearTokens" class="ghost">Clear</button></h2>
+      <span class="hint">access</span><code id="access">—</code>
+      <span class="hint">refresh</span><code id="refresh">—</code>
+    </div>
+
+    <div class="card">
+      <h2>Response</h2>
+      <div id="result"><p class="empty">Send a request to see the response here.</p></div>
+    </div>
+
+    <div class="card">
+      <h2>History</h2>
+      <ul id="history" class="history"><li class="empty">No requests yet.</li></ul>
+    </div>
+  </div>
+</main>
+
+<script>
+  const $ = (s) => document.querySelector(s)
+  const $$ = (s) => document.querySelectorAll(s)
+
+  // localStorage can be blocked (private window / file://), so never let it break the page
+  const store = {
+    get(k) { try { return localStorage.getItem(k) } catch { return null } },
+    set(k, v) { try { v == null ? localStorage.removeItem(k) : localStorage.setItem(k, v) } catch {} }
+  }
+
+  $('#base').value = store.get('base') || $('#base').value
+  $('#lang').value = store.get('lang') || $('#lang').value
+  $('#base').addEventListener('change', () => { store.set('base', $('#base').value); ping() })
+  $('#lang').addEventListener('change', () => store.set('lang', $('#lang').value))
+
+  // ---------- tokens ----------
+  let tokens = { access: store.get('access'), refresh: store.get('refresh') }
+  function setTokens(t) {
+    tokens = { access: t?.accessToken || null, refresh: t?.refreshToken || null }
+    store.set('access', tokens.access); store.set('refresh', tokens.refresh)
+    renderTokens()
+  }
+  function renderTokens() {
+    $('#access').textContent = tokens.access || '—'
+    $('#refresh').textContent = tokens.refresh || '—'
+  }
+  $('#clearTokens').addEventListener('click', () => setTokens(null))
+  renderTokens()
+
+  // ---------- request helper ----------
+  const history = []
+
+  async function api(method, path, { body, token } = {}) {
+    const base = $('#base').value.trim().replace(/\/+$/, '')
+    const headers = { 'Accept-Language': $('#lang').value }
+    if (body) headers['Content-Type'] = 'application/json'
+    if (token) headers['Authorization'] = 'Bearer ' + token
+
+    const started = performance.now()
+    let status = 0, data
+    try {
+      const res = await fetch(base + path, { method, headers, body: body ? JSON.stringify(body) : undefined })
+      status = res.status
+      const text = await res.text()
+      try { data = JSON.parse(text) } catch { data = text }
+    } catch (e) {
+      data = { error: 'Could not reach the server. Is "npm run dev" running and is the URL right?', detail: e.message }
+    }
+
+    const entry = { method, path, status, ms: Math.round(performance.now() - started), body, data, at: new Date() }
+    history.unshift(entry); history.length = Math.min(history.length, 15)
+    show(entry); renderHistory()
+    return { ok: status >= 200 && status < 300, status, data }
+  }
+
+  // ---------- output ----------
+  const statusClass = (s) => s >= 500 ? 's5' : s >= 400 ? 's4' : s >= 200 ? 's2' : 's0'
+  const esc = (s) => String(s).replace(/[&<>"]/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]))
+
+  function show({ method, path, status, ms, body, data }) {
+    // the stack trace is long, so tuck it away
+    let stack = null, shown = data
+    if (data && typeof data === 'object' && data.stack) { ({ stack, ...shown } = data) }
+    $('#result').innerHTML = `
+      <div class="resmeta">
+        <span class="status ${statusClass(status)}">${status || 'ERR'}</span>
+        <span>${method} ${esc(path)}</span><span style="color:var(--muted)">${ms} ms</span>
+      </div>
+      <pre>${esc(JSON.stringify(shown, null, 2))}</pre>
+      ${body ? `<details><summary>request body</summary><pre>${esc(JSON.stringify(body, null, 2))}</pre></details>` : ''}
+      ${stack ? `<details><summary>stack</summary><pre>${esc(stack)}</pre></details>` : ''}`
+  }
+
+  function renderHistory() {
+    const ul = $('#history')
+    ul.innerHTML = ''
+    history.forEach((h) => {
+      const li = document.createElement('li')
+      li.innerHTML = `<span class="status ${statusClass(h.status)}">${h.status || 'ERR'}</span>
+        <span class="path">${h.method} ${esc(h.path)}</span><time>${h.at.toLocaleTimeString()}</time>`
+      li.addEventListener('click', () => show(h))
+      ul.appendChild(li)
+    })
+  }
+
+  // fill the email (and password) in the next forms after signup, so you don't retype them
+  function carryOver({ email, password }) {
+    $$('form[data-action] input[name="email"]').forEach((i) => { if (!i.value) i.value = email })
+    const loginPass = $('form[data-action="login"] input[name="password"]')
+    if (password && !loginPass.value) loginPass.value = password
+  }
+
+  // ---------- actions ----------
+  const actions = {
+    async signup(f) {
+      const r = await api('POST', '/auth/signup', { body: { ...f, gender: Number(f.gender) } })
+      if (r.ok) carryOver(f)
+    },
+    confirm: (f) => api('POST', '/auth/confirm_email', { body: f }),
+    resend: (f) => api('POST', '/auth/resend_otp', { body: f }),
+    async login(f) {
+      const r = await api('POST', '/auth/login', { body: f })
+      if (r.ok) setTokens(r.data?.data?.tokens)
+    },
+    forget: (f) => api('POST', '/auth/forget_password', { body: f }),
+    verifyForget: (f) => api('POST', '/auth/verify_forget_password_otp', { body: f }),
+    async reset(f) {
+      const r = await api('POST', '/auth/reset_password', { body: f })
+      if (r.ok) {
+        setTokens(null)   // the old tokens are dead now
+        const loginPass = $('form[data-action="login"] input[name="password"]')
+        loginPass.value = f.newPassword
+      }
+    },
+    profile: () => api('GET', '/user/profile', { token: tokens.access }),
+    async rotate() {
+      const r = await api('POST', '/auth/rotate_token', { token: tokens.refresh })
+      if (r.ok) setTokens(r.data?.data?.tokens || r.data?.data)
+    },
+    async 'logout-device'() {
+      const r = await api('POST', '/auth/logout', { token: tokens.access, body: { action: 0 } })
+      if (r.ok) setTokens(null)
+    },
+    async 'logout-all'() {
+      const r = await api('POST', '/auth/logout', { token: tokens.access, body: { action: 1 } })
+      if (r.ok) setTokens(null)
+    }
+  }
+
+  async function run(button, fn) {
+    button.disabled = true
+    try { await fn() } finally { button.disabled = false }
+  }
+
+  $$('form[data-action]').forEach((form) => {
+    form.addEventListener('submit', (e) => {
+      e.preventDefault()
+      const fields = Object.fromEntries(new FormData(form))
+      for (const k in fields) fields[k] = String(fields[k]).trim()
+      run(form.querySelector('button'), () => actions[form.dataset.action](fields))
+    })
+  })
+  $$('button[data-action]').forEach((b) => b.addEventListener('click', () => run(b, actions[b.dataset.action])))
+
+  // ---------- server status ----------
+  async function ping() {
+    const dot = $('#dot')
+    try {
+      const res = await fetch($('#base').value.trim().replace(/\/+$/, '') + '/')
+      dot.className = 'dot ' + (res.ok ? 'on' : 'off'); dot.title = res.ok ? 'server online' : 'server error'
+    } catch { dot.className = 'dot off'; dot.title = 'server offline' }
+  }
+  ping(); setInterval(ping, 10000)
+</script>
+</body>
+</html>

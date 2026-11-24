@@ -1,3 +1,4 @@
 export const emailEventsEnum = Object.freeze({
-    SIGNUP: 'signup'
+    SIGNUP: 'signup',
+    FORGET: 'forgetPassword',
 })
