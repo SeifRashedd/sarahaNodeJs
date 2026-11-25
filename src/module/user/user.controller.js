@@ -1,8 +1,9 @@
 import { Router } from "express";
 import { response } from "../../common/index.js";
 import * as us from './user.service.js';
-import { auth, validation } from '../../common/middleware/index.js'
+import { auth, validation, multerMiddleware } from '../../common/middleware/index.js'
 import { userProfileSchema } from './user_validation.js'
+import { proccesFile } from "../../common/middleware/multer.js";
 
 export const userRouter = Router();
 
@@ -21,5 +22,14 @@ userRouter.put("/update_user", async (req, res) => {
     let user = await us.updateUser(req.user, req.body);
     response(res, 200, user, "user update successfully");
 });
+
+
+
+
+userRouter.post("/image",multerMiddleware({storageFolder:'user' , types:[fileTypes.image]}).single('image'), proccesFile([fileTypes.image] ) ,async (req, res , next) => {
+    console.log(req.file);  
+    response(res, 200, req.file, "image uploaded successfully");
+});
+
 
 
