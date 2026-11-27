@@ -2,7 +2,6 @@ import multer from "multer"
 import fs from 'fs'
 import { fileTypeFromBuffer, fileTypeFromFile } from 'file-type';
 import { badRequestException } from "../utils/exception.js";
-import { promise } from "zod";
 
 
 export let fileTypes = {
@@ -12,7 +11,7 @@ export let fileTypes = {
     pdf: ['application/pdf']
 }
 
-export const multerMiddleware = ({ storageFolder = 'general', types = [fileTypes.image] }) => {
+export const multerMiddleware = ({ storageFolder = 'general', types = [fileTypes.image] } = {}) => {
     let storage = multer.diskStorage({
         destination: function (req, file, cb) {
             let folderPath = './uploads/' + storageFolder
@@ -26,9 +25,8 @@ export const multerMiddleware = ({ storageFolder = 'general', types = [fileTypes
         }
     })
     let fileFilter = function (req, file, cb) {
-        let result = fileTypeFromFile()
-        if (!types.includes(file.mimetype)) {
-            cb(new Error('Invalid file type'), false)
+        if (!types.flat().includes(file.mimetype)) {
+            cb(new Error('Invalid file type', { cause: 400 }), false)
         } else {
             cb(null, true)
         }
@@ -40,23 +38,27 @@ export const multerMiddleware = ({ storageFolder = 'general', types = [fileTypes
 }
 
 
-export const proccesFile = (types = [fileTypes.image]) => {
+export const proccesFile = (types = [fileTypes.image], storageFolder = 'general') => {
     return async (req, res, next) => {
         if (req.file) {
-            req.file = await checlFile({ file, storageFolder, types })
+            req.file = await checkFile({ file: req.file, storageFolder, types })
         }
         else if (Array.isArray(req.files) && req.files.length > 0) {
             let data = []
             for (const file of req.files) {
-                data.push(checlFile({ file, storageFolder, types }))
+                data.push(checkFile({ file, storageFolder, types }))
             }
-            req.files = await promise.all(data)
+            req.files = await Promise.all(data)
         }
         else if (typeof req.files== 'object' && Object.keys(req.files).length>0){
-            
+            for (const field in req.files) {
+                let data = []
+                for (const file of req.files[field]) {
+                    data.push(checkFile({ file, storageFolder, types }))
+                }
+                req.files[field] = await Promise.all(data)
+            }
         }
-        
-
         next()
     }
 }
@@ -64,26 +66,26 @@ export const proccesFile = (types = [fileTypes.image]) => {
 
 
 
-const checlFile = async ({ file, storageFolder, types }) => {
+const checkFile = async ({ file, storageFolder, types }) => {
     let result
     if (file.buffer) {
         result = await fileTypeFromBuffer(file.buffer)
     } else {
         result = await fileTypeFromFile(file.path)
     }
-    if (!types.includes(result.mime) || req.file.mimetype !== result.mime) {
-        fs.unlinkSync(req.file.path)
-        badRequestException('File type not allowed')
+    if (!result || !types.flat().includes(result.mime) || file.mimetype !== result.mime) {
+        if (file.path) fs.unlinkSync(file.path)
+        badRequestException({ message: 'File type not allowed' })
     }
 
     if (file.buffer) {
         let dirPath = `./uploads/${storageFolder}`
-        let fullPath = `${dirPath}/${Date.now()}-${file.original}`
+        let fullPath = `${dirPath}/${Date.now()}-${file.originalname}`
         if (!fs.existsSync(dirPath)) {
             fs.mkdirSync(dirPath, { recursive: true })
         }
         fs.writeFileSync(fullPath, file.buffer)
-        req.file.path = fullPath
+        file.path = fullPath
     }
     return file
 }

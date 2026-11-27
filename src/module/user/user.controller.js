@@ -1,9 +1,9 @@
 import { Router } from "express";
-import { response } from "../../common/index.js";
+import { response, exception } from "../../common/index.js";
 import * as us from './user.service.js';
 import { auth, validation, multerMiddleware } from '../../common/middleware/index.js'
 import { userProfileSchema } from './user_validation.js'
-import { proccesFile } from "../../common/middleware/multer.js";
+import { proccesFile, fileTypes } from "../../common/middleware/multer.js";
 
 export const userRouter = Router();
 
@@ -26,8 +26,9 @@ userRouter.put("/update_user", async (req, res) => {
 
 
 
-userRouter.post("/image",multerMiddleware({storageFolder:'user' , types:[fileTypes.image]}).single('image'), proccesFile([fileTypes.image] ) ,async (req, res , next) => {
-    console.log(req.file);  
+userRouter.post("/image",multerMiddleware({storageFolder:'user' , types:[fileTypes.image]}).single('image'), proccesFile([fileTypes.image], 'user') ,async (req, res , next) => {
+    if (!req.file) exception.badRequestException({ message: "image is required" })
+    console.log(req.file);
     response(res, 200, req.file, "image uploaded successfully");
 });
 
