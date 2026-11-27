@@ -1,7 +1,6 @@
 import { z } from 'zod'
 import { langEnum } from '../enums/index.js'
 
-// fallback for messages we didn't write ourselves (missing field, unknown key, ...)
 const arLocaleError = z.locales.ar().localeError
 
 export const validation = (schema) => {
@@ -13,7 +12,9 @@ export const validation = (schema) => {
          params: req.params,
          body: req.body,
          query: req.query,
-         headers: req.headers
+         headers: req.headers,
+         file: req.file, 
+         files: req.files
       }, lang === langEnum.ar ? { error: arLocaleError } : undefined)
       if (!success) {
          throw error

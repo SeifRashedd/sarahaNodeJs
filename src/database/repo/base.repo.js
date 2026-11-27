@@ -68,7 +68,7 @@ export default (model) => {
                 query.populate(populate)
             }
 
-            return await query.execut()
+            return await query.exec()
         }
     }
 }

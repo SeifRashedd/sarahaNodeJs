@@ -2,7 +2,7 @@ import express from "express";
 import confgService from './config/config.service.js';
 import { dpconnect } from './database/connection.js';
 import { errHandler } from "./common/index.js";
-import { authRouter, userRouter } from "./module/index.js";
+import { authRouter, userRouter, messageRouter } from "./module/index.js";
 import cors from 'cors'
 import { get, set } from "./common/service/cache.service.js";
 
@@ -20,6 +20,7 @@ console.log(await get({ key: 'test' }));
 
 app.use('/auth', authRouter);
 app.use('/user', userRouter);
+app.use('/message', messageRouter);
 
 
 app.get("/", (req, res) => {

@@ -33,5 +33,10 @@ export const tooManyRequestsException = ({ message = 'Too Many Requests' }) => {
 }
 
 
+export const serverErrorException = ({ message = 'Internal Server Error' }) => {
+    mainException({ message, cause: 500 });
+}
+
+
 
 

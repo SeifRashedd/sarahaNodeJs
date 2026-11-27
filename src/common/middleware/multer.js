@@ -21,7 +21,8 @@ export const multerMiddleware = ({ storageFolder = 'general', types = [fileTypes
             cb(null, folderPath)
         },
         filename: function (req, file, cb) {
-            cb(null, Date.now() + "-" + file.originalname)
+            // random part: two files uploaded in the same millisecond would otherwise get the same name and overwrite each other
+            cb(null, Date.now() + "-" + Math.round(Math.random() * 1e9) + "-" + file.originalname)
         }
     })
     let fileFilter = function (req, file, cb) {
@@ -80,7 +81,7 @@ const checkFile = async ({ file, storageFolder, types }) => {
 
     if (file.buffer) {
         let dirPath = `./uploads/${storageFolder}`
-        let fullPath = `${dirPath}/${Date.now()}-${file.originalname}`
+        let fullPath = `${dirPath}/${Date.now()}-${Math.round(Math.random() * 1e9)}-${file.originalname}`
         if (!fs.existsSync(dirPath)) {
             fs.mkdirSync(dirPath, { recursive: true })
         }
